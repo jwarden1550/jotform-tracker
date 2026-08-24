@@ -59,6 +59,8 @@
       <option value="recent">Sort: Most recent</option>
       <option value="po-asc">Sort: PO number (ascending)</option>
       <option value="po-desc">Sort: PO number (descending)</option>
+      <option value="vendor-asc">Sort: Vendor (A-Z)</option>
+      <option value="vendor-desc">Sort: Vendor (Z-A)</option>
     </select>
   </div>
 
@@ -116,6 +118,10 @@ function applyFilter() {
     filtered.sort((a, b) => a.po_number.localeCompare(b.po_number, undefined, { numeric: true }));
   } else if (sortMode === 'po-desc') {
     filtered.sort((a, b) => b.po_number.localeCompare(a.po_number, undefined, { numeric: true }));
+  } else if (sortMode === 'vendor-asc') {
+    filtered.sort((a, b) => (a.vendor || '').localeCompare(b.vendor || ''));
+  } else if (sortMode === 'vendor-desc') {
+    filtered.sort((a, b) => (b.vendor || '').localeCompare(a.vendor || ''));
   }
   // 'recent' relies on the server's default order (created_at DESC), so no re-sort needed.
 
