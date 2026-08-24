@@ -126,7 +126,7 @@ function render(forms) {
       <div class="item-top">
         <div>
           <div class="item-title"><a href="${escapeHtml(f.url)}" target="_blank" rel="noopener">${escapeHtml(f.title)}</a></div>
-          <div class="item-meta">${escapeHtml(f.url)} &middot; viewed ${new Date(f.viewed_at + 'Z').toLocaleString()}</div>
+          <div class="item-meta">${escapeHtml(f.url)} &middot; viewed ${new Date(/[Z+]|-\d\d:\d\d$/.test(f.viewed_at) ? f.viewed_at : f.viewed_at + 'Z').toLocaleString()}</div>
         </div>
         <span class="badge ${escapeHtml(f.status)}">${escapeHtml(f.status)}</span>
       </div>
