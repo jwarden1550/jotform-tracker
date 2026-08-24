@@ -28,6 +28,12 @@
   .item-title { font-weight: 600; }
   .item-meta { color: var(--muted); font-size: 12px; margin-top: 2px; }
   .empty { color: var(--muted); text-align: center; padding: 40px 0; }
+  .inline-msg { font-size: 13px; margin-top: 8px; }
+  .inline-msg.error { color: #dc2626; }
+  .inline-msg.success { color: #16a34a; }
+  .controls-bar { display: flex; gap: 8px; margin-bottom: 16px; }
+  .controls-bar input { width: 100%; }
+  select.sort-select { background: #fff; }
 </style>
 </head>
 <body>
@@ -44,10 +50,16 @@
       <input type="text" id="po-input" placeholder="PO number (e.g. 4133)" />
       <button id="po-add-btn">Add PO</button>
     </div>
+    <div class="inline-msg" id="po-msg"></div>
   </div>
 
-  <div class="search-bar">
-    <input type="text" id="po-search" placeholder="Search PO number..." style="width:100%;" />
+  <div class="controls-bar">
+    <input type="text" id="po-search" placeholder="Search PO number..." />
+    <select id="po-sort" class="sort-select">
+      <option value="recent">Sort: Most recent</option>
+      <option value="po-asc">Sort: PO number (ascending)</option>
+      <option value="po-desc">Sort: PO number (descending)</option>
+    </select>
   </div>
 
   <ul class="list" id="po-list"></ul>
@@ -63,8 +75,15 @@ const poListEl = document.getElementById('po-list');
 const poEmptyEl = document.getElementById('po-empty');
 const poInputEl = document.getElementById('po-input');
 const poSearchEl = document.getElementById('po-search');
+const poSortEl = document.getElementById('po-sort');
+const poMsgEl = document.getElementById('po-msg');
 
 let allPos = [];
+
+function showMsg(text, type) {
+  poMsgEl.textContent = text;
+  poMsgEl.className = 'inline-msg' + (type ? ' ' + type : '');
+}
 
 async function fetchPos() {
   const res = await fetch('/api/pos');
@@ -90,7 +109,16 @@ function renderPos(pos) {
 
 function applyFilter() {
   const q = poSearchEl.value.trim();
-  const filtered = q ? allPos.filter(p => p.po_number.includes(q)) : allPos;
+  let filtered = q ? allPos.filter(p => p.po_number.includes(q)) : allPos.slice();
+
+  const sortMode = poSortEl.value;
+  if (sortMode === 'po-asc') {
+    filtered.sort((a, b) => a.po_number.localeCompare(b.po_number, undefined, { numeric: true }));
+  } else if (sortMode === 'po-desc') {
+    filtered.sort((a, b) => b.po_number.localeCompare(a.po_number, undefined, { numeric: true }));
+  }
+  // 'recent' relies on the server's default order (created_at DESC), so no re-sort needed.
+
   renderPos(filtered);
 }
 
@@ -108,9 +136,10 @@ async function addPo() {
     body: JSON.stringify({ po_number })
   });
   if (res.status === 409) {
-    alert('That PO number is already recorded.');
+    showMsg(`PO ${po_number} was already entered previously.`, 'error');
     return;
   }
+  showMsg(`PO ${po_number} added.`, 'success');
   poInputEl.value = '';
   refreshPos();
 }
@@ -119,8 +148,10 @@ document.getElementById('po-add-btn').addEventListener('click', addPo);
 poInputEl.addEventListener('keydown', (e) => {
   if (e.key === 'Enter') addPo();
 });
+poInputEl.addEventListener('input', () => showMsg('', ''));
 
 poSearchEl.addEventListener('input', applyFilter);
+poSortEl.addEventListener('change', applyFilter);
 
 poListEl.addEventListener('click', async (e) => {
   const btn = e.target.closest('button');
