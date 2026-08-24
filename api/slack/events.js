@@ -59,6 +59,61 @@ function extractSubmission(event, ownerEmail) {
   return { title, url, notes, tags: 'jotform-submission', status: 'completed' };
 }
 
+const CHECKMARK_EMOJIS = new Set(['white_check_mark', 'heavy_check_mark', 'ballot_box_with_check']);
+
+async function slackApi(method, params) {
+  const res = await fetch(`https://slack.com/api/${method}`, {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${process.env.SLACK_BOT_TOKEN}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(params),
+  });
+  return res.json();
+}
+
+async function upsertForm({ title, url, notes, tags, status }) {
+  await ensureSchema();
+  const existing = (await sql`SELECT id FROM forms WHERE url = ${url}`).rows[0];
+  if (existing) {
+    await sql`
+      UPDATE forms SET title = ${title}, notes = ${notes}, tags = ${tags}, status = ${status}
+      WHERE id = ${existing.id}
+    `;
+  } else {
+    await sql`
+      INSERT INTO forms (title, url, notes, tags, status)
+      VALUES (${title}, ${url}, ${notes}, ${tags}, ${status})
+    `;
+  }
+}
+
+async function handlePoReaction(event) {
+  if (!CHECKMARK_EMOJIS.has(event.reaction)) return;
+  if (!event.item || event.item.type !== 'message') return;
+
+  const { channel, ts } = event.item;
+  const result = await slackApi('reactions.get', { channel, timestamp: ts });
+  if (!result.ok || !result.message) return;
+
+  const text = result.message.text || '';
+  const match = text.match(/\bPO\s*#?\s*(\d+)/i);
+  if (!match) return;
+  const poNumber = match[1];
+
+  const permalinkResult = await slackApi('chat.getPermalink', { channel, message_ts: ts });
+  const url = permalinkResult.ok ? permalinkResult.permalink : `slack-message://${channel}/${ts}`;
+
+  await upsertForm({
+    title: `PO ${poNumber}`,
+    url,
+    notes: text,
+    tags: 'po',
+    status: 'completed',
+  });
+}
+
 module.exports = async (req, res) => {
   if (req.method !== 'POST') {
     res.setHeader('Allow', 'POST');
@@ -79,23 +134,13 @@ module.exports = async (req, res) => {
     return res.status(200).end('ok');
   }
 
-  if (body.type === 'event_callback' && body.event && body.event.type === 'message') {
-    const ownerEmail = process.env.OWNER_EMAIL || 'jwarden@arenaclub.com';
-    const submission = extractSubmission(body.event, ownerEmail);
-    if (submission) {
-      await ensureSchema();
-      const existing = (await sql`SELECT id FROM forms WHERE url = ${submission.url}`).rows[0];
-      if (existing) {
-        await sql`
-          UPDATE forms SET title = ${submission.title}, notes = ${submission.notes}, tags = ${submission.tags}, status = ${submission.status}
-          WHERE id = ${existing.id}
-        `;
-      } else {
-        await sql`
-          INSERT INTO forms (title, url, notes, tags, status)
-          VALUES (${submission.title}, ${submission.url}, ${submission.notes}, ${submission.tags}, ${submission.status})
-        `;
-      }
+  if (body.type === 'event_callback' && body.event) {
+    if (body.event.type === 'message') {
+      const ownerEmail = process.env.OWNER_EMAIL || 'jwarden@arenaclub.com';
+      const submission = extractSubmission(body.event, ownerEmail);
+      if (submission) await upsertForm(submission);
+    } else if (body.event.type === 'reaction_added') {
+      await handlePoReaction(body.event);
     }
   }
 
