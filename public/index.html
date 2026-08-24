@@ -1,0 +1,210 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>JotForm Tracker</title>
+<style>
+  :root {
+    --bg: #f7f7f8; --panel: #fff; --border: #e3e3e6; --text: #1a1a1e;
+    --muted: #6b6b74; --accent: #4f46e5; --accent-hover: #4338ca;
+    --status-viewed: #6b7280; --status-interested: #2563eb; --status-applied: #16a34a; --status-archived: #9ca3af;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); }
+  header { padding: 24px 32px 8px; }
+  h1 { margin: 0 0 4px; font-size: 22px; }
+  .sub { color: var(--muted); font-size: 14px; margin-bottom: 16px; }
+  .container { max-width: 900px; margin: 0 auto; padding: 0 32px 60px; }
+  .card { background: var(--panel); border: 1px solid var(--border); border-radius: 10px; padding: 16px; margin-bottom: 16px; }
+  .row { display: flex; gap: 8px; flex-wrap: wrap; }
+  input, select, textarea { font: inherit; padding: 8px 10px; border: 1px solid var(--border); border-radius: 6px; background: #fff; color: var(--text); }
+  input[type=text], input[type=url] { flex: 1; min-width: 160px; }
+  textarea { width: 100%; resize: vertical; min-height: 36px; }
+  button { font: inherit; padding: 8px 14px; border: none; border-radius: 6px; background: var(--accent); color: #fff; cursor: pointer; }
+  button:hover { background: var(--accent-hover); }
+  button.secondary { background: transparent; color: var(--muted); border: 1px solid var(--border); }
+  button.danger { background: transparent; color: #dc2626; border: 1px solid var(--border); }
+  .form-grid { display: grid; grid-template-columns: 1fr; gap: 8px; }
+  .search-bar { margin-bottom: 16px; }
+  ul.list { list-style: none; margin: 0; padding: 0; }
+  li.item { background: var(--panel); border: 1px solid var(--border); border-radius: 10px; padding: 14px 16px; margin-bottom: 10px; }
+  .item-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 8px; }
+  .item-title { font-weight: 600; }
+  .item-title a { color: var(--text); text-decoration: none; }
+  .item-title a:hover { text-decoration: underline; }
+  .item-meta { color: var(--muted); font-size: 12px; margin-top: 2px; }
+  .badge { display: inline-block; font-size: 11px; padding: 2px 8px; border-radius: 999px; color: #fff; text-transform: capitalize; }
+  .badge.viewed { background: var(--status-viewed); }
+  .badge.interested { background: var(--status-interested); }
+  .badge.applied { background: var(--status-applied); }
+  .badge.archived { background: var(--status-archived); }
+  .item-notes { margin-top: 8px; font-size: 14px; white-space: pre-wrap; }
+  .item-tags { margin-top: 6px; }
+  .tag { display: inline-block; background: #eef2ff; color: var(--accent); font-size: 11px; padding: 2px 8px; border-radius: 999px; margin-right: 4px; }
+  .item-actions { display: flex; gap: 6px; margin-top: 10px; }
+  .empty { color: var(--muted); text-align: center; padding: 40px 0; }
+  details.bookmarklet summary { cursor: pointer; color: var(--accent); font-size: 14px; }
+  .bookmarklet-box { margin-top: 10px; font-size: 13px; color: var(--muted); }
+  .bookmarklet-box a.btn { display: inline-block; background: var(--accent); color: #fff; padding: 8px 14px; border-radius: 6px; text-decoration: none; font-weight: 600; margin: 8px 0; }
+  code { background: #f0f0f2; padding: 2px 6px; border-radius: 4px; font-size: 12px; }
+</style>
+</head>
+<body>
+<header>
+  <div class="container" style="padding:0;">
+    <h1>JotForm Tracker</h1>
+    <div class="sub">Every JotForm you've looked at, in one place.</div>
+  </div>
+</header>
+<div class="container">
+
+  <div class="card">
+    <details class="bookmarklet">
+      <summary>Quick-add bookmarklet (drag to bookmarks bar)</summary>
+      <div class="bookmarklet-box">
+        <p>Drag this link to your bookmarks bar, then click it while viewing any JotForm page to add it instantly:</p>
+        <a class="btn" id="bookmarklet-link" href="#">📌 Add to JotForm Tracker</a>
+        <p>It sends the page's title and URL to this tracker. The server must be running at <code id="origin-label"></code> for it to work.</p>
+      </div>
+    </details>
+  </div>
+
+  <div class="card">
+    <div class="form-grid" id="add-form">
+      <div class="row">
+        <input type="url" id="f-url" placeholder="JotForm URL *" />
+        <input type="text" id="f-title" placeholder="Title (optional)" />
+      </div>
+      <div class="row">
+        <input type="text" id="f-tags" placeholder="Tags (comma separated)" />
+        <select id="f-status">
+          <option value="viewed">Viewed</option>
+          <option value="interested">Interested</option>
+          <option value="applied">Applied</option>
+          <option value="archived">Archived</option>
+        </select>
+      </div>
+      <textarea id="f-notes" placeholder="Notes"></textarea>
+      <div class="row">
+        <button id="add-btn">Add form</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="search-bar">
+    <input type="text" id="search" placeholder="Search title, url, notes, tags..." style="width:100%;" />
+  </div>
+
+  <ul class="list" id="list"></ul>
+  <div class="empty" id="empty" style="display:none;">No JotForms tracked yet. Add one above.</div>
+</div>
+
+<script>
+const listEl = document.getElementById('list');
+const emptyEl = document.getElementById('empty');
+const searchEl = document.getElementById('search');
+
+function escapeHtml(s) {
+  return (s || '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+
+async function fetchForms(q) {
+  const url = q ? `/api/forms?q=${encodeURIComponent(q)}` : '/api/forms';
+  const res = await fetch(url);
+  return res.json();
+}
+
+function render(forms) {
+  listEl.innerHTML = '';
+  emptyEl.style.display = forms.length ? 'none' : 'block';
+  for (const f of forms) {
+    const li = document.createElement('li');
+    li.className = 'item';
+    const tags = (f.tags || '').split(',').map(t => t.trim()).filter(Boolean);
+    li.innerHTML = `
+      <div class="item-top">
+        <div>
+          <div class="item-title"><a href="${escapeHtml(f.url)}" target="_blank" rel="noopener">${escapeHtml(f.title)}</a></div>
+          <div class="item-meta">${escapeHtml(f.url)} &middot; viewed ${new Date(f.viewed_at + 'Z').toLocaleString()}</div>
+        </div>
+        <span class="badge ${escapeHtml(f.status)}">${escapeHtml(f.status)}</span>
+      </div>
+      ${f.notes ? `<div class="item-notes">${escapeHtml(f.notes)}</div>` : ''}
+      ${tags.length ? `<div class="item-tags">${tags.map(t => `<span class="tag">${escapeHtml(t)}</span>`).join('')}</div>` : ''}
+      <div class="item-actions">
+        <button class="secondary" data-action="cycle" data-id="${f.id}">Change status</button>
+        <button class="danger" data-action="delete" data-id="${f.id}">Delete</button>
+      </div>
+    `;
+    listEl.appendChild(li);
+  }
+}
+
+async function refresh() {
+  const forms = await fetchForms(searchEl.value.trim());
+  render(forms);
+}
+
+const STATUS_CYCLE = ['viewed', 'interested', 'applied', 'archived'];
+
+listEl.addEventListener('click', async (e) => {
+  const btn = e.target.closest('button');
+  if (!btn) return;
+  const id = btn.dataset.id;
+  if (btn.dataset.action === 'delete') {
+    if (!confirm('Delete this entry?')) return;
+    await fetch(`/api/forms/${id}`, { method: 'DELETE' });
+    refresh();
+  } else if (btn.dataset.action === 'cycle') {
+    const forms = await fetchForms(searchEl.value.trim());
+    const f = forms.find(x => String(x.id) === String(id));
+    if (!f) return;
+    const next = STATUS_CYCLE[(STATUS_CYCLE.indexOf(f.status) + 1) % STATUS_CYCLE.length];
+    await fetch(`/api/forms/${id}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ status: next })
+    });
+    refresh();
+  }
+});
+
+document.getElementById('add-btn').addEventListener('click', async () => {
+  const url = document.getElementById('f-url').value.trim();
+  if (!url) { alert('URL is required'); return; }
+  const title = document.getElementById('f-title').value.trim();
+  const tags = document.getElementById('f-tags').value.trim();
+  const status = document.getElementById('f-status').value;
+  const notes = document.getElementById('f-notes').value.trim();
+  await fetch('/api/forms', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ url, title, tags, status, notes })
+  });
+  document.getElementById('f-url').value = '';
+  document.getElementById('f-title').value = '';
+  document.getElementById('f-tags').value = '';
+  document.getElementById('f-notes').value = '';
+  document.getElementById('f-status').value = 'viewed';
+  refresh();
+});
+
+let searchTimer;
+searchEl.addEventListener('input', () => {
+  clearTimeout(searchTimer);
+  searchTimer = setTimeout(refresh, 200);
+});
+
+function setupBookmarklet() {
+  const origin = window.location.origin;
+  document.getElementById('origin-label').textContent = origin;
+  const code = `javascript:(function(){var o=${JSON.stringify(origin)};fetch(o+'/api/forms',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({url:location.href,title:document.title})}).then(function(r){return r.ok?r.json():Promise.reject(r)}).then(function(){alert('Added to JotForm Tracker!')}).catch(function(){alert('Could not reach JotForm Tracker at '+o)})})();`;
+  document.getElementById('bookmarklet-link').setAttribute('href', code);
+}
+
+setupBookmarklet();
+refresh();
+</script>
+</body>
+</html>
