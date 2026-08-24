@@ -4,42 +4,195 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Jot Form Tracker</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <style>
   :root {
-    --bg: #f7f7f8; --panel: #fff; --border: #e3e3e6; --text: #1a1a1e;
-    --muted: #6b6b74; --accent: #4f46e5; --accent-hover: #4338ca;
+    --bg: #f4f5f9;
+    --panel: #ffffff;
+    --border: #e6e7ee;
+    --text: #14141a;
+    --muted: #6c6f80;
+    --accent: #5850ec;
+    --accent-hover: #4640c9;
+    --accent-soft: #eef0ff;
+    --danger: #e0344c;
+    --danger-soft: #fdecef;
+    --success: #12875a;
+    --success-soft: #e9f9f1;
+    --shadow: 0 1px 2px rgba(20,20,26,.04), 0 8px 24px -12px rgba(20,20,26,.10);
+    --radius: 14px;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #0f1016;
+      --panel: #1a1b23;
+      --border: #2a2c38;
+      --text: #f1f2f6;
+      --muted: #9395a8;
+      --accent: #7c74ff;
+      --accent-hover: #6a62f0;
+      --accent-soft: #232244;
+      --danger: #ff6b81;
+      --danger-soft: #2c1a20;
+      --success: #34d399;
+      --success-soft: #142a22;
+      --shadow: 0 1px 2px rgba(0,0,0,.3), 0 12px 32px -14px rgba(0,0,0,.6);
+    }
   }
   * { box-sizing: border-box; }
-  body { margin: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); }
-  header { padding: 24px 32px 8px; }
-  h1 { margin: 0 0 4px; font-size: 22px; }
-  .sub { color: var(--muted); font-size: 14px; margin-bottom: 16px; }
-  .container { max-width: 700px; margin: 0 auto; padding: 0 32px 60px; }
-  .card { background: var(--panel); border: 1px solid var(--border); border-radius: 10px; padding: 16px; margin-bottom: 16px; }
-  .row { display: flex; gap: 8px; flex-wrap: wrap; }
-  input { font: inherit; padding: 8px 10px; border: 1px solid var(--border); border-radius: 6px; background: #fff; color: var(--text); }
+  body {
+    margin: 0;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    background:
+      radial-gradient(1200px 480px at 15% -10%, color-mix(in srgb, var(--accent) 12%, transparent), transparent 60%),
+      var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    -webkit-font-smoothing: antialiased;
+  }
+  header { padding: 48px 24px 8px; }
+  .brand { display: flex; align-items: center; gap: 12px; margin-bottom: 6px; }
+  .brand-mark {
+    width: 40px; height: 40px; border-radius: 11px;
+    background: linear-gradient(135deg, var(--accent), #9b6bff);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 19px; flex-shrink: 0;
+    box-shadow: 0 6px 16px -4px color-mix(in srgb, var(--accent) 60%, transparent);
+  }
+  h1 { margin: 0; font-size: 26px; font-weight: 800; letter-spacing: -0.02em; }
+  .sub { color: var(--muted); font-size: 14.5px; margin: 0 0 28px 52px; }
+  .container { max-width: 700px; margin: 0 auto; padding: 0 24px 60px; }
+
+  .card {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 18px;
+    margin-bottom: 18px;
+    box-shadow: var(--shadow);
+  }
+  .row { display: flex; gap: 10px; flex-wrap: wrap; }
+
+  input {
+    font: inherit;
+    font-size: 14.5px;
+    padding: 11px 14px;
+    border: 1.5px solid var(--border);
+    border-radius: 10px;
+    background: var(--panel);
+    color: var(--text);
+    transition: border-color .15s ease, box-shadow .15s ease;
+  }
+  input::placeholder { color: var(--muted); }
+  input:focus {
+    outline: none;
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 18%, transparent);
+  }
   input[type=text] { flex: 1; min-width: 160px; }
-  button { font: inherit; padding: 8px 14px; border: none; border-radius: 6px; background: var(--accent); color: #fff; cursor: pointer; }
+
+  button {
+    font: inherit;
+    font-size: 14.5px;
+    font-weight: 600;
+    padding: 11px 18px;
+    border: none;
+    border-radius: 10px;
+    background: var(--accent);
+    color: #fff;
+    cursor: pointer;
+    transition: background .15s ease, transform .1s ease;
+  }
   button:hover { background: var(--accent-hover); }
-  button.danger { background: transparent; color: #dc2626; border: 1px solid var(--border); }
-  .search-bar { margin-bottom: 16px; }
-  ul.list { list-style: none; margin: 0; padding: 0; }
-  li.item { background: var(--panel); border: 1px solid var(--border); border-radius: 10px; padding: 14px 16px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; }
-  .item-title { font-weight: 600; }
-  .item-meta { color: var(--muted); font-size: 12px; margin-top: 2px; }
-  .empty { color: var(--muted); text-align: center; padding: 40px 0; }
-  .inline-msg { font-size: 13px; margin-top: 8px; }
-  .inline-msg.error { color: #dc2626; }
-  .inline-msg.success { color: #16a34a; }
-  .controls-bar { display: flex; gap: 8px; margin-bottom: 16px; }
+  button:active { transform: translateY(1px); }
+  button.danger {
+    background: transparent;
+    color: var(--danger);
+    border: 1.5px solid var(--border);
+    font-weight: 500;
+    padding: 7px 12px;
+    font-size: 13px;
+  }
+  button.danger:hover { background: var(--danger-soft); border-color: var(--danger); }
+
+  .controls-bar { display: flex; gap: 10px; margin-bottom: 20px; }
   .controls-bar input { width: 100%; }
-  select.sort-select { background: #fff; }
+  select.sort-select {
+    font: inherit;
+    font-size: 14px;
+    padding: 11px 14px;
+    border: 1.5px solid var(--border);
+    border-radius: 10px;
+    background: var(--panel);
+    color: var(--text);
+    cursor: pointer;
+  }
+  select.sort-select:focus { outline: none; border-color: var(--accent); }
+
+  .list-header {
+    display: flex; align-items: baseline; justify-content: space-between;
+    margin: 4px 2px 12px;
+  }
+  .list-title { font-size: 13px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: .05em; }
+  .count-badge {
+    font-size: 12px; font-weight: 700; color: var(--accent);
+    background: var(--accent-soft); padding: 3px 10px; border-radius: 999px;
+  }
+
+  ul.list { list-style: none; margin: 0; padding: 0; }
+  li.item {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 14px 16px;
+    margin-bottom: 10px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+    transition: border-color .15s ease, box-shadow .15s ease;
+  }
+  li.item:hover { border-color: color-mix(in srgb, var(--accent) 35%, var(--border)); box-shadow: var(--shadow); }
+
+  .item-main { display: flex; align-items: center; gap: 12px; min-width: 0; }
+  .po-chip {
+    flex-shrink: 0;
+    font-weight: 700; font-size: 13px;
+    color: var(--accent);
+    background: var(--accent-soft);
+    padding: 6px 11px;
+    border-radius: 8px;
+    letter-spacing: .01em;
+  }
+  .item-text { min-width: 0; }
+  .item-title { font-weight: 600; font-size: 14.5px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .vendor-tag {
+    display: inline-flex; align-items: center; gap: 5px;
+    font-size: 13px; color: var(--muted); font-weight: 500;
+  }
+  .vendor-dot { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; }
+  .item-meta { color: var(--muted); font-size: 12px; margin-top: 2px; }
+
+  .empty {
+    color: var(--muted); text-align: center; padding: 56px 20px;
+    background: var(--panel); border: 1.5px dashed var(--border); border-radius: var(--radius);
+    font-size: 14px;
+  }
+
+  .inline-msg { font-size: 13px; margin-top: 10px; font-weight: 500; min-height: 18px; }
+  .inline-msg.error { color: var(--danger); }
+  .inline-msg.success { color: var(--success); }
 </style>
 </head>
 <body>
 <header>
   <div class="container" style="padding:0;">
-    <h1>Jot Form Tracker</h1>
+    <div class="brand">
+      <div class="brand-mark">📋</div>
+      <h1>Jot Form Tracker</h1>
+    </div>
     <div class="sub">Completed PO numbers, in one place.</div>
   </div>
 </header>
@@ -64,6 +217,11 @@
     </select>
   </div>
 
+  <div class="list-header">
+    <span class="list-title">Completed POs</span>
+    <span class="count-badge" id="po-count">0</span>
+  </div>
+
   <ul class="list" id="po-list"></ul>
   <div class="empty" id="po-empty" style="display:none;">No PO numbers recorded yet.</div>
 </div>
@@ -73,12 +231,21 @@ function escapeHtml(s) {
   return (s || '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 }
 
+const VENDOR_COLORS = ['#5850ec', '#e0344c', '#12875a', '#d97706', '#0891b2', '#c026d3', '#65a30d', '#4f46e5'];
+function vendorColor(name) {
+  if (!name) return '#93959f';
+  let hash = 0;
+  for (let i = 0; i < name.length; i++) hash = (hash * 31 + name.charCodeAt(i)) >>> 0;
+  return VENDOR_COLORS[hash % VENDOR_COLORS.length];
+}
+
 const poListEl = document.getElementById('po-list');
 const poEmptyEl = document.getElementById('po-empty');
 const poInputEl = document.getElementById('po-input');
 const poSearchEl = document.getElementById('po-search');
 const poSortEl = document.getElementById('po-sort');
 const poMsgEl = document.getElementById('po-msg');
+const poCountEl = document.getElementById('po-count');
 
 let allPos = [];
 
@@ -95,13 +262,20 @@ async function fetchPos() {
 function renderPos(pos) {
   poListEl.innerHTML = '';
   poEmptyEl.style.display = pos.length ? 'none' : 'block';
+  poCountEl.textContent = pos.length;
   for (const p of pos) {
     const li = document.createElement('li');
     li.className = 'item';
+    const addedDate = new Date(/[Z+]|-\d\d:\d\d$/.test(p.created_at) ? p.created_at : p.created_at + 'Z');
     li.innerHTML = `
-      <div>
-        <div class="item-title">PO ${escapeHtml(p.po_number)}${p.vendor ? ` &middot; ${escapeHtml(p.vendor)}` : ''}</div>
-        <div class="item-meta">added ${new Date(/[Z+]|-\d\d:\d\d$/.test(p.created_at) ? p.created_at : p.created_at + 'Z').toLocaleString()}</div>
+      <div class="item-main">
+        <div class="po-chip">PO ${escapeHtml(p.po_number)}</div>
+        <div class="item-text">
+          ${p.vendor
+            ? `<div class="vendor-tag"><span class="vendor-dot" style="background:${vendorColor(p.vendor)}"></span>${escapeHtml(p.vendor)}</div>`
+            : `<div class="vendor-tag" style="opacity:.6">No vendor matched</div>`}
+          <div class="item-meta">added ${addedDate.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}</div>
+        </div>
       </div>
       <button class="danger" data-id="${p.id}">Delete</button>
     `;
