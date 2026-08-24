@@ -98,7 +98,7 @@ function renderPos(pos) {
     li.className = 'item';
     li.innerHTML = `
       <div>
-        <div class="item-title">PO ${escapeHtml(p.po_number)}</div>
+        <div class="item-title">PO ${escapeHtml(p.po_number)}${p.vendor ? ` &middot; ${escapeHtml(p.vendor)}` : ''}</div>
         <div class="item-meta">added ${new Date(/[Z+]|-\d\d:\d\d$/.test(p.created_at) ? p.created_at : p.created_at + 'Z').toLocaleString()}</div>
       </div>
       <button class="danger" data-id="${p.id}">Delete</button>

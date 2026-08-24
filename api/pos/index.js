@@ -10,13 +10,14 @@ module.exports = async (req, res) => {
 
   if (req.method === 'POST') {
     const po_number = (req.body && req.body.po_number || '').trim();
+    const vendor = (req.body && req.body.vendor || '').trim() || null;
     if (!po_number) return res.status(400).json({ error: 'po_number is required' });
 
     const existing = (await sql`SELECT id FROM pos WHERE po_number = ${po_number}`).rows[0];
     if (existing) return res.status(409).json({ error: 'PO already recorded' });
 
     const inserted = (await sql`
-      INSERT INTO pos (po_number) VALUES (${po_number}) RETURNING *
+      INSERT INTO pos (po_number, vendor) VALUES (${po_number}, ${vendor}) RETURNING *
     `).rows[0];
     return res.json(inserted);
   }

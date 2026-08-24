@@ -18,6 +18,7 @@ db.exec(`
   CREATE TABLE IF NOT EXISTS pos (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     po_number TEXT NOT NULL,
+    vendor TEXT,
     created_at TEXT NOT NULL DEFAULT (datetime('now'))
   )
 `);
@@ -84,12 +85,20 @@ app.get('/api/pos', (req, res) => {
 });
 
 app.post('/api/pos', (req, res) => {
-  const { po_number } = req.body;
+  const { po_number, vendor } = req.body;
   if (!po_number || !po_number.trim()) return res.status(400).json({ error: 'po_number is required' });
   const existing = db.prepare('SELECT id FROM pos WHERE po_number = ?').get(po_number.trim());
   if (existing) return res.status(409).json({ error: 'PO already recorded' });
-  const info = db.prepare('INSERT INTO pos (po_number) VALUES (?)').run(po_number.trim());
+  const info = db.prepare('INSERT INTO pos (po_number, vendor) VALUES (?, ?)').run(po_number.trim(), (vendor || '').trim() || null);
   res.json(db.prepare('SELECT * FROM pos WHERE id = ?').get(info.lastInsertRowid));
+});
+
+app.put('/api/pos/:id', (req, res) => {
+  const vendor = (req.body.vendor || '').trim() || null;
+  const existing = db.prepare('SELECT id FROM pos WHERE id = ?').get(req.params.id);
+  if (!existing) return res.status(404).json({ error: 'not found' });
+  db.prepare('UPDATE pos SET vendor = ? WHERE id = ?').run(vendor, req.params.id);
+  res.json(db.prepare('SELECT * FROM pos WHERE id = ?').get(req.params.id));
 });
 
 app.delete('/api/pos/:id', (req, res) => {
