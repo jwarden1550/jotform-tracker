@@ -14,6 +14,13 @@ db.exec(`
     viewed_at TEXT NOT NULL DEFAULT (datetime('now'))
   )
 `);
+db.exec(`
+  CREATE TABLE IF NOT EXISTS pos (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    po_number TEXT NOT NULL,
+    created_at TEXT NOT NULL DEFAULT (datetime('now'))
+  )
+`);
 
 const app = express();
 app.use(express.json());
@@ -69,6 +76,24 @@ app.put('/api/forms/:id', (req, res) => {
 
 app.delete('/api/forms/:id', (req, res) => {
   db.prepare('DELETE FROM forms WHERE id = ?').run(req.params.id);
+  res.json({ ok: true });
+});
+
+app.get('/api/pos', (req, res) => {
+  res.json(db.prepare('SELECT * FROM pos ORDER BY created_at DESC').all());
+});
+
+app.post('/api/pos', (req, res) => {
+  const { po_number } = req.body;
+  if (!po_number || !po_number.trim()) return res.status(400).json({ error: 'po_number is required' });
+  const existing = db.prepare('SELECT id FROM pos WHERE po_number = ?').get(po_number.trim());
+  if (existing) return res.status(409).json({ error: 'PO already recorded' });
+  const info = db.prepare('INSERT INTO pos (po_number) VALUES (?)').run(po_number.trim());
+  res.json(db.prepare('SELECT * FROM pos WHERE id = ?').get(info.lastInsertRowid));
+});
+
+app.delete('/api/pos/:id', (req, res) => {
+  db.prepare('DELETE FROM pos WHERE id = ?').run(req.params.id);
   res.json({ ok: true });
 });
 

@@ -100,6 +100,16 @@
 
   <ul class="list" id="list"></ul>
   <div class="empty" id="empty" style="display:none;">No JotForms tracked yet. Add one above.</div>
+
+  <h2 style="font-size:16px; margin: 32px 0 8px;">Completed PO Numbers</h2>
+  <div class="card">
+    <div class="row">
+      <input type="text" id="po-input" placeholder="PO number (e.g. 4133)" />
+      <button id="po-add-btn">Add PO</button>
+    </div>
+  </div>
+  <ul class="list" id="po-list"></ul>
+  <div class="empty" id="po-empty" style="display:none;">No PO numbers recorded yet.</div>
 </div>
 
 <script>
@@ -207,6 +217,69 @@ function setupBookmarklet() {
 
 setupBookmarklet();
 refresh();
+
+const poListEl = document.getElementById('po-list');
+const poEmptyEl = document.getElementById('po-empty');
+const poInputEl = document.getElementById('po-input');
+
+async function fetchPos() {
+  const res = await fetch('/api/pos');
+  return res.json();
+}
+
+function renderPos(pos) {
+  poListEl.innerHTML = '';
+  poEmptyEl.style.display = pos.length ? 'none' : 'block';
+  for (const p of pos) {
+    const li = document.createElement('li');
+    li.className = 'item';
+    li.innerHTML = `
+      <div class="item-top">
+        <div class="item-title">PO ${escapeHtml(p.po_number)}</div>
+      </div>
+      <div class="item-meta">added ${new Date(/[Z+]|-\d\d:\d\d$/.test(p.created_at) ? p.created_at : p.created_at + 'Z').toLocaleString()}</div>
+      <div class="item-actions">
+        <button class="danger" data-id="${p.id}">Delete</button>
+      </div>
+    `;
+    poListEl.appendChild(li);
+  }
+}
+
+async function refreshPos() {
+  renderPos(await fetchPos());
+}
+
+async function addPo() {
+  const po_number = poInputEl.value.trim();
+  if (!po_number) return;
+  const res = await fetch('/api/pos', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ po_number })
+  });
+  if (res.status === 409) {
+    alert('That PO number is already recorded.');
+    return;
+  }
+  poInputEl.value = '';
+  refreshPos();
+}
+
+document.getElementById('po-add-btn').addEventListener('click', addPo);
+poInputEl.addEventListener('keydown', (e) => {
+  if (e.key === 'Enter') addPo();
+});
+
+poListEl.addEventListener('click', async (e) => {
+  const btn = e.target.closest('button');
+  if (!btn) return;
+  if (!confirm('Delete this PO number?')) return;
+  await fetch(`/api/pos/${btn.dataset.id}`, { method: 'DELETE' });
+  refreshPos();
+});
+
+refreshPos();
 </script>
 </body>
 </html>
